@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pendataan Penjualan Obat UKS</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f2f6f7;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        h1 {
+            text-align: center;
+            color: #c62828;
+        }
+
+        label {
+            font-weight: bold;
+            display: block;
+            margin-top: 15px;
+        }
+
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 6px;
+            box-sizing: border-box;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            background: #c62828;
+            color: white;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background: #8e0000;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 25px;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: center;
+        }
+
+        th {
+            background: #c62828;
+            color: white;
+        }
+
+        .total {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: right;
+        }
+
+        .hapus {
+            background: #555;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <h1>🏥 Pendataan Penjualan Obat UKS</h1>
+
+    <label>Nama Pembeli</label>
+    <input type="text" id="nama" placeholder="Masukkan nama pembeli">
+
+    <label>Kelas</label>
+    <input type="text" id="kelas" placeholder="Contoh: XI TKJ 1">
+
+    <label>Pilih Obat</label>
+    <select id="obat" onchange="tampilkanHarga()">
+        <option value="">-- Pilih Obat --</option>
+        <option value="FEMINAX">FEMINAX</option>
+        <option value="MIXAGRIP">MIXAGRIP</option>
+        <option value="PROMAG">PROMAG</option>
+        <option value="BODREX">BODREX</option>
+        <option value="HANDSAPLAS">HANDSAPLAS</option>
+        <option value="SOFTEX">SOFTEX</option>
+        <option value="RHEUMACYL">RHEUMACYL</option>
+        <option value="SALONPLASS">SALONPLASS</option>
+        <option value="TOLAK ANGIN">TOLAK ANGIN</option>
+    </select>
+
+    <label>Jumlah</label>
+    <input type="number" id="jumlah" min="1" value="1" onchange="tampilkanHarga()" oninput="tampilkanHarga()">
+
+    <label>Harga</label>
+    <input type="text" id="harga" readonly placeholder="Harga otomatis">
+
+    <button onclick="tambahData()">Tambah Data Penjualan</button>
+
+    <table>
+        <thead>
+            <tr>
+                <th>No</th>
+                <th>Tanggal</th>
+                <th>Pembeli</th>
+                <th>Kelas</th>
+                <th>Obat</th>
+                <th>Jumlah</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+
+        <tbody id="tabelData"></tbody>
+    </table>
+
+    <div class="total">
+        Total Semua Penjualan:
+        <span id="totalSemua">Rp0</span>
+    </div>
+
+    <button class="hapus" onclick="hapusData()">Hapus Semua Data</button>
+</div>
+
+<script>
+    // Memuat data dari localStorage saat aplikasi pertama kali dibuka
+    let dataPenjualan = JSON.parse(localStorage.getItem("dataPenjualanUKS")) || [];
+    let totalSemua = 0;
+
+    // Tampilkan data langsung ketika halaman dimuat
+    tampilkanData();
+
+    function formatRupiah(angka) {
+        return "Rp" + angka.toLocaleString("id-ID");
+    }
+
+    function hitungHarga(obat, jumlah) {
+        if (obat === "FEMINAX" || obat === "MIXAGRIP") {
+            if (jumlah >= 4) {
+                return Math.floor(jumlah / 4) * 3000 + (jumlah % 4) * 1000;
+            } else {
+                return jumlah * 1000;
+            }
+        }
+
+        if (obat === "PROMAG" || obat === "SALONPLASS") {
+            return jumlah * 1000;
+        }
+
+        if (obat === "BODREX" || obat === "RHEUMACYL") {
+            if (jumlah >= 2) {
+                return Math.floor(jumlah / 2) * 1500 + (jumlah % 2) * 750;
+            } else {
+                return jumlah * 750;
+            }
+        }
+
+        if (obat === "HANDSAPLAS") {
+            return jumlah * 500;
+        }
+
+        if (obat === "SOFTEX") {
+            return jumlah * 2000;
+        }
+
+        if (obat === "TOLAK ANGIN") {
+            return jumlah * 4000;
+        }
+
+        return 0;
+    }
+
+    function tampilkanHarga() {
+        let obat = document.getElementById("obat").value;
+        let jumlah = parseInt(document.getElementById("jumlah").value) || 0;
+        let harga = hitungHarga(obat, jumlah);
+
+        document.getElementById("harga").value = harga > 0 ? formatRupiah(harga) : "";
+    }
+
+    function tambahData() {
+        let nama = document.getElementById("nama").value.trim();
+        let kelas = document.getElementById("kelas").value.trim();
+        let obat = document.getElementById("obat").value;
+        let jumlah = parseInt(document.getElementById("jumlah").value);
+
+        if (nama === "" || kelas === "" || obat === "" || isNaN(jumlah) || jumlah <= 0) {
+            alert("Silakan lengkapi semua data dengan benar!");
+            return;
+        }
+
+        let total = hitungHarga(obat, jumlah);
+
+        // Ambil tanggal & waktu saat ini
+        let sekarang = new Date();
+        let tanggalFormatted = sekarang.toLocaleDateString("id-ID", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric"
+        }) + " " + sekarang.toLocaleTimeString("id-ID", {
+            hour: "2-digit",
+            minute: "2-digit"
+        });
+
+        dataPenjualan.push({
+            tanggal: tanggalFormatted,
+            nama: nama,
+            kelas: kelas,
+            obat: obat,
+            jumlah: jumlah,
+            total: total
+        });
+
+        // Simpan pembaruan array ke localStorage
+        localStorage.setItem("dataPenjualanUKS", JSON.stringify(dataPenjualan));
+
+        tampilkanData();
+
+        // Reset input form
+        document.getElementById("nama").value = "";
+        document.getElementById("kelas").value = "";
+        document.getElementById("obat").value = "";
+        document.getElementById("jumlah").value = 1;
+        document.getElementById("harga").value = "";
+    }
+
+    function tampilkanData() {
+        let tabel = document.getElementById("tabelData");
+        tabel.innerHTML = "";
+        totalSemua = 0;
+
+        dataPenjualan.forEach(function(data, index) {
+            totalSemua += data.total;
+
+            let baris = `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${data.tanggal || "-"}</td>
+                    <td>${data.nama}</td>
+                    <td>${data.kelas}</td>
+                    <td>${data.obat}</td>
+                    <td>${data.jumlah}</td>
+                    <td>${formatRupiah(data.total)}</td>
+                </tr>
+            `;
+
+            tabel.innerHTML += baris;
+        });
+
+        document.getElementById("totalSemua").innerText = formatRupiah(totalSemua);
+    }
+
+    function hapusData() {
+        if (confirm("Yakin ingin menghapus semua data?")) {
+            dataPenjualan = [];
+            // Hapus data dari localStorage
+            localStorage.removeItem("dataPenjualanUKS");
+
+            tampilkanData();
+        }
+    }
+</script>
+
+</body>
+</html>
